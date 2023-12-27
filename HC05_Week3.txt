@@ -1,0 +1,94 @@
+#include <SoftwareSerial.h>
+
+// Motor A connections 
+int in1 = 11;
+int in2 = A2;
+
+// Motor B connections
+int in3 = 3;
+int in4 = A3;
+int LED = A4;
+int Buzzer = A5;
+// Define the RX and TX pins for SoftwareSerial
+int bluetoothRX = 1;  // Choose any digital pin for RX
+int bluetoothTX = 0;  // Choose any digital pin for TX
+SoftwareSerial bluetooth(bluetoothRX, bluetoothTX);
+
+
+void setup() {
+  Serial.begin(9600);
+  bluetooth.begin(9600);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  
+  // Set motors to a known state (e.g., stopped)
+  analogWrite(in1, 0);
+  analogWrite(in2, 0);
+  analogWrite(in3, 0);
+  analogWrite(in4, 0);
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    char command = Serial.read();
+    executeCommand(command);
+  }
+}
+
+void executeCommand(char command) {
+  switch (command) {
+    case '1':
+      // MOVE FORWARD
+      analogWrite(in1, 255);
+      analogWrite(in2, 0);
+      analogWrite(in3, 255);
+      analogWrite(in4, 0);
+      break;
+    case '2':
+      // MOVE BACKWARD
+      analogWrite(in1, 0);
+      analogWrite(in2, 255);
+      analogWrite(in3, 0);
+      analogWrite(in4, 255);
+      break;
+    case 'S':
+      // STOP
+      analogWrite(in1, 0);
+      analogWrite(in2, 0);
+      analogWrite(in3, 0);
+      analogWrite(in4, 0);
+      break;
+    case '3':
+      // LEFT
+      analogWrite(in1, 255);
+      analogWrite(in2, 0);
+      analogWrite(in3, 0);
+      analogWrite(in4, 255);
+      break;
+    case '4':
+      // RIGHT
+      analogWrite(in1, 0);
+      analogWrite(in2, 255);
+      analogWrite(in3, 255);
+      analogWrite(in4, 0);
+      break;
+      
+    case 'X':
+      // buzzer
+      analogWrite(LED, 255);
+      analogWrite(Buzzer, 255);
+      break;
+
+    case 'Y':
+        // buzzer
+      analogWrite(LED, 0);
+      analogWrite(Buzzer, 0);
+      break;
+
+    default:
+      // Invalid command or do nothing
+      break;
+  }
+}

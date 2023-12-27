@@ -1,0 +1,155 @@
+#include "LiquidCrystal.h"
+
+// Motor A connections 
+int in1 = 11 ;
+int in2 = A2;
+
+// Motor B connections
+int in3 = 3;
+int in4 = A3;
+
+const int trigPin = A5;  // TRIG pin of HC-SR04 connected to digital pin 2
+const int echoPin = A4;  // ECHO pin of HC-SR04 connected to digital pin 3
+
+// IR sensor connections
+int leftIR = 12;  // Replace with the actual pin numbers you are using
+int rightIR = 13; // Replace with the actual pin numbers you are using
+int Encoder = 2;
+int encoderTick = 20;
+float wheelCircumference = 0.212;
+
+float totalDistance = 0;
+unsigned long totalRunTime = 0;
+
+unsigned long startTime = 0;
+unsigned long runTime = 0;
+unsigned long prevEncoderState = 0; // Declare prevEncoderState here
+
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // Change these pins to your LCD's pins
+
+void setup() {
+  // Set all the motor control pins to outputs
+  Serial.begin(9600);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  pinMode(leftIR, INPUT);
+  pinMode(rightIR, INPUT);
+  pinMode(Encoder, INPUT_PULLUP);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  // Initialize the LCD
+  lcd.begin(16, 2);
+
+  // Turn off motors - Initial state
+  analogWrite(in1, 0);
+  analogWrite(in2, 0);
+  analogWrite(in3, 0);
+  analogWrite(in4, 0);
+}
+
+void loop() {
+  // Read IR sensor values
+  int leftIRValue = digitalRead(leftIR);
+  int rightIRValue = digitalRead(rightIR);
+  int encoderState = digitalRead(Encoder);
+
+if (encoderState != prevEncoderState && encoderState ==0)
+{
+  totalDistance += (wheelCircumference/encoderTick);
+
+  if (startTime ==0)
+  {
+    startTime = millis();
+  }
+}
+else
+{
+  startTime=0;
+}
+
+prevEncoderState = encoderState;
+
+if (startTime>0){
+  runTime = millis() - startTime;
+}
+
+lcd.setCursor(0,0);
+lcd.print("Total= ");
+lcd.print(totalDistance, 2);
+lcd.print("m");
+
+lcd.setCursor(0,1);
+lcd.print("Time: ");
+lcd.print(runTime/1000);
+
+if (leftIRValue == HIGH && rightIRValue == HIGH)
+{
+  totalRunTime += runTime;
+}
+
+runTime= 0;
+
+ if (millis() - startTime <= 250) {
+  // Turn on both motors to move forward
+  analogWrite(in1, 100);
+  analogWrite(in2, 0);
+  analogWrite(in3, 100);
+  analogWrite(in4, 0);
+  }
+  else{
+  // Trigger pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Measure the duration of the echo pulse
+  long duration = pulseIn(echoPin, HIGH);
+
+  // Calculate distance in centimeters
+  // Speed of sound in air is approximately 343 meters/second or 0.0343 centimeters/microsecond
+  int distance = duration * 0.0343 / 2;
+    if(distance>15){
+      // MOVE FORWARD
+      if (leftIRValue == HIGH && rightIRValue == HIGH) {
+        // Turn on both motors to move forward
+        analogWrite(in1, 100);
+        analogWrite(in2, 0);
+        analogWrite(in3, 100);
+        analogWrite(in4, 0);
+        } 
+      //STOP
+      if (leftIRValue == LOW && rightIRValue == LOW) {
+        // Turn on both motors to move forward
+        analogWrite(in1, 0);
+        analogWrite(in2, 0);
+        analogWrite(in3, 0);
+        analogWrite(in4, 0);
+        }
+      //LEFT
+      if(leftIRValue == HIGH && rightIRValue == LOW){
+        analogWrite(in1, 255);
+        analogWrite(in2, 0);
+        analogWrite(in3, 0);
+        analogWrite(in4, 255);
+       }
+      //RIGHT
+      if(leftIRValue == LOW && rightIRValue == HIGH){
+        analogWrite(in1, 0);
+        analogWrite(in2, 255);
+        analogWrite(in3, 255);
+        analogWrite(in4, 0);
+        }
+} else {
+  // Turn on both motors to move forward
+  analogWrite(in1, 0);
+  analogWrite(in2, 0);
+  analogWrite(in3, 0);
+  analogWrite(in4, 0);
+  delay(500);
+  }
+  }
+}
